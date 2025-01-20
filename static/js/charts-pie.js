@@ -68,7 +68,6 @@ countCommentsByHour = (data) => {
   return { labels, counts };
 }
 
-
 update = () => {
   fetch('/api/v1/landing')
     .then(response => response.json())
