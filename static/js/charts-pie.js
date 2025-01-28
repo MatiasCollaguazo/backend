@@ -36,26 +36,34 @@ window.myPie = new Chart(pieCtx, pieConfig)
 
 // Función para procesar el JSON
 countCommentsByHour = (data) => {
-
-  // Inicializar contadores por rango de horas
   const labels = ["0 a.m. - 8 a.m.", "8 a.m. - 16 p.m.", "16 p.m. - 0 a.m."];
   const counts = [0, 0, 0];
 
   Object.values(data).forEach(record => {
-
     const savedTime = record.saved;
     if (!savedTime) {
       return;
     }
 
-    // Convertir a formato de hora AM/PM
-    const formattedTime = savedTime.replace('a. m.', 'AM').replace('p. m.', 'PM');
+    const [datePart, timePart, ampm] = savedTime.match(/(\d{2}\/\d{2}\/\d{4}), (\d{2}:\d{2}:\d{2}) ([ap]\. m\.)/).slice(1);
 
-    // Crear objeto Date con la cadena de tiempo
-    const dt = new Date(Date.parse(formattedTime.replace(/(\d{2}\/\d{2}\/\d{4}), (\d{2}):(\d{2}):(\d{2}) (AM|PM)/, '$1 $2:$3:$4 $5')));
+    let [hours, minutes, seconds] = timePart.split(':').map(Number);
+    if (ampm === 'p. m.' && hours !== 12) {
+      hours += 12;
+    } else if (ampm === 'a. m.' && hours === 12) {
+      hours = 0;
+    }
+
+    const [day, month, year] = datePart.split('/').map(Number);
+    const dt = new Date(year, month - 1, day, hours, minutes, seconds);
+
+    if (isNaN(dt.getTime())) {
+      console.error('Fecha inválida:', savedTime);
+      return;
+    }
+
     const hour = dt.getHours();
 
-    // Clasificar en el rango correspondiente
     if (hour >= 0 && hour < 8) {
       counts[0]++;
     } else if (hour >= 8 && hour < 16) {
@@ -65,8 +73,10 @@ countCommentsByHour = (data) => {
     }
   });
 
+  console.log(counts);
   return { labels, counts };
-}
+};
+
 
 update = () => {
   fetch('/api/v1/landing')
