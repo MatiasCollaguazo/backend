@@ -36,6 +36,7 @@ window.myPie = new Chart(pieCtx, pieConfig)
 
 // Función para procesar el JSON
 countCommentsByHour = (data) => {
+  // Inicializar contadores por rango de horas
   const labels = ["0 a.m. - 8 a.m.", "8 a.m. - 16 p.m.", "16 p.m. - 0 a.m."];
   const counts = [0, 0, 0];
 
@@ -45,8 +46,10 @@ countCommentsByHour = (data) => {
       return;
     }
 
+    // Extraer partes de la fecha y hora manualmente
     const [datePart, timePart, ampm] = savedTime.match(/(\d{2}\/\d{2}\/\d{4}), (\d{2}:\d{2}:\d{2}) ([ap]\. m\.)/).slice(1);
 
+    // Convertir a formato de 24 horas
     let [hours, minutes, seconds] = timePart.split(':').map(Number);
     if (ampm === 'p. m.' && hours !== 12) {
       hours += 12;
@@ -54,16 +57,18 @@ countCommentsByHour = (data) => {
       hours = 0;
     }
 
+    // Crear objeto Date
     const [day, month, year] = datePart.split('/').map(Number);
     const dt = new Date(year, month - 1, day, hours, minutes, seconds);
 
+    // Verificar si la fecha es válida
     if (isNaN(dt.getTime())) {
       console.error('Fecha inválida:', savedTime);
       return;
     }
 
     const hour = dt.getHours();
-
+    // Clasificar en el rango correspondiente
     if (hour >= 0 && hour < 8) {
       counts[0]++;
     } else if (hour >= 8 && hour < 16) {
@@ -73,12 +78,11 @@ countCommentsByHour = (data) => {
     }
   });
 
-  console.log(counts);
   return { labels, counts };
 };
 
 
-update = () => {
+const updatePieChart  = () => {
   fetch('/api/v1/landing')
     .then(response => response.json())
     .then(data => {
@@ -99,4 +103,4 @@ update = () => {
     .catch(error => console.error('Error:', error));
 }
 
-update();
+updatePieChart ();
